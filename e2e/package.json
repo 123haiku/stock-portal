@@ -1,0 +1,14 @@
+{
+  "name": "stock-portal-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser smoke test for the portal (login -> search -> quote -> mobile)",
+  "scripts": {
+    "smoke": "node smoke.mjs",
+    "install-browser": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.0"
+  }
+}
