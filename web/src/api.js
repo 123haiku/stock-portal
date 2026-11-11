@@ -1,19 +1,24 @@
 import axios from 'axios';
+import { resolveApiBase } from './apiBase.js';
 
 /**
  * Resolve the API base URL for both delivery targets.
  *
  * - Browser (Vite dev / static hosting): relative "/api", forwarded by the dev
  *   proxy or served same-origin.
- * - Capacitor native shell: a WebView has no dev proxy, so a build-time
- *   VITE_API_URL is injected. `adb reverse tcp:4000 tcp:4000` makes
- *   http://localhost:4000 reach the host machine over USB.
+ * - Capacitor native shell: a WebView has no dev proxy, so the base is probed at
+ *   startup from a candidate list (see apiBase.js) and cached for later launches.
+ *
+ * Requests are issued before the probe finishes, so every call waits on the same
+ * promise instead of failing with a relative-URL error.
  */
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
-
 export const api = axios.create({
-  baseURL: API_BASE,
-  timeout: 10000,
+  timeout: 12000,
+});
+
+api.interceptors.request.use(async (config) => {
+  if (!config.baseURL) config.baseURL = await resolveApiBase();
+  return config;
 });
 
 const TOKEN_KEY = 'portal.token';
@@ -51,7 +56,11 @@ api.interceptors.response.use(
   (error) => {
     // A 401 means the JWT expired or was tampered with: drop the stale session.
     if (error.response?.status === 401) session.clear();
-    const message = error.response?.data?.error || error.message;
+    const detail = error.response?.data?.error || error.message;
+    const base = error.config?.baseURL || '';
+    // Surface the address that failed: "timeout" alone hides whether the phone
+    // reached the right host.
+    const message = error.response ? detail : `${detail} (${base || 'unknown API host'})`;
     return Promise.reject(new Error(message));
   },
 );

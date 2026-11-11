@@ -21,3 +21,6 @@ web/android/app/src/main/assets/capacitor.plugins.json
 
 # The distributable APK is intentionally tracked so it can be downloaded directly.
 !release/*.apk
+
+# Local build staging for the Pi deployment
+build/

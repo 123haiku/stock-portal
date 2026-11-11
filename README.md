@@ -23,13 +23,23 @@ runnable from a clean checkout with one `npm install` per package.
 
 ## Install the Android app
 
-**[⬇ Download StockPortal-1.0.apk](https://github.com/123haiku/stock-portal/releases/download/v1.0.0/StockPortal-1.0.apk)** (3.99 MB, signed
+**[⬇ Download StockPortal-1.1.apk](https://github.com/123haiku/stock-portal/releases/download/v1.1.0/StockPortal-1.1.apk)** (4.05 MB, signed
 debug build, Android 7.0+)
 
-Open the link on the phone, allow installs from the browser, and install. Start the
-API on the laptop first and keep both devices on the same Wi-Fi - the APK is built
-against `http://192.168.37.142:4000/api`. Full instructions, including how to rebuild
-for a different IP or install over USB, are in [docs/ANDROID_APK.md](docs/ANDROID_APK.md).
+The APK has no fixed server address: at startup it probes a short candidate list
+(Raspberry Pi `192.168.37.200:4000`, `adb reverse` on `localhost:4000`, emulator
+`10.0.2.2:4000`) and caches the first one whose `/api/health` answers. The login
+screen shows the address in use and lets you change it without rebuilding. Full
+instructions, including the Pi deployment and the rebuild path, are in
+[docs/ANDROID_APK.md](docs/ANDROID_APK.md).
+
+## Where it runs
+
+| Target | How |
+| --- | --- |
+| Laptop, development | `server` on `:4000`, `web` dev server on `:5173` with an `/api` proxy |
+| Raspberry Pi | systemd user units: API on `:4000`, prebuilt bundle on `:8088` (`deploy/pi-deploy.sh`) |
+| Android phone | the APK above, resolving its API origin at runtime |
 
 ![Android app](docs/screens/14-android-final.png)
 
@@ -198,7 +208,7 @@ reaches the API rather than a bundled stub. See `docs/ANDROID_APK.md` for the
 | `PORT` | `4000` / `4010` | server, bot |
 | `JWT_SECRET` | `dev-secret-change-me` | server |
 | `DB_PATH` | `server/data/portal.db` | server |
-| `VITE_API_URL` | `/api` | web build (absolute API origin for the APK) |
+| `VITE_API_URL` | `/api` | web build (pin one API origin; when unset the APK probes at runtime) |
 | `VERIFY_TOKEN` | `local-dev-token` | bot |
 | `TRANSPORT` | `fake` | bot |
 | `FAKE_FAILURE_RATE` | `0.15` | bot |
@@ -215,9 +225,8 @@ reaches the API rather than a bundled stub. See `docs/ANDROID_APK.md` for the
   table is the next step.
 - No migration tool; `schema.sql` is idempotent and the seed only runs on an empty
   database.
-- The APK is signed with the Android debug key and its API origin is a LAN address
-  fixed at build time. A release build needs a private keystore and a reachable
-  HTTPS endpoint.
+- The APK is signed with the Android debug key and speaks plain HTTP to a LAN
+  address. A release build needs a private keystore and a reachable HTTPS endpoint.
 
 ## License
 
