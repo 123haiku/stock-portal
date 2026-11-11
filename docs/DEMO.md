@@ -61,15 +61,29 @@ line one was rolled back. This is the answer to "what was the hardest bug you hi
 > taken up front, and added the insufficient-stock test that asserts the first line
 > is not deducted when a later line fails.
 
-## 4. Mobile (1 min)
+## 4. Mobile (2 min)
 
-Show `http://<LAN-IP>:5173` on a phone, or resize the browser window:
+Two things to show, in this order.
 
-- below 768 px the table is replaced by a card list, not a squeezed table;
-- the manifest makes it installable - **Add to Home Screen** opens it full-screen.
+**The native APK.** Install `release/StockPortal-1.0.apk`, open **Stock Portal**,
+sign in, create a quotation. It is a real app icon, a real splash screen, and no
+browser chrome. Then say the honest technical sentence:
 
-Same codebase, same API, no separate native build. Say that explicitly: it is a
-responsive/PWA build, not a native app.
+> It is a Capacitor shell around the same Vue bundle. The WebView loads the identical
+> build the browser gets; the only difference is that the API origin is injected at
+> build time through `VITE_API_URL`. So there is no second UI codebase to keep in
+> sync - which is the reason I chose this over writing a separate native client.
+
+If asked "so you didn't write Java/Kotlin": "No. The native layer is the Capacitor
+bridge - WebView host, splash, lifecycle. Everything I wrote is the API and the
+interface. What I did have to solve was Android-specific: minSdk, cleartext traffic
+for an HTTP API, the WebView's mixed-content rule that forced `androidScheme: http`,
+and a safe-area style node the bridge expected. Those are in the commit log."
+
+**The responsive layout.** Resize the browser below 768 px, or open
+`http://<LAN-IP>:5173` on a phone: the table becomes a card list rather than a
+squeezed grid, and the PWA manifest makes it installable. Same code, two form
+factors.
 
 ## 5. Bot retry path (2 min)
 

@@ -16,8 +16,22 @@ runnable from a clean checkout with one `npm install` per package.
 - **JWT authentication** with bcrypt-hashed passwords and role separation.
 - **Responsive + installable** front-end: a data table on desktop, a card list on
   mobile, and a PWA manifest so it can be added to a phone home screen.
+- **Native Android APK** built from the same Vue bundle through Capacitor - installs
+  and runs on a phone without a browser.
 - **Messaging bot** that receives a WhatsApp-style webhook, acks in under 60 ms, and
   dispatches outbound replies through a queue with exponential backoff.
+
+## Install the Android app
+
+**[⬇ Download StockPortal-1.0.apk](release/StockPortal-1.0.apk)** (3.99 MB, signed
+debug build, Android 7.0+)
+
+Open the link on the phone, allow installs from the browser, and install. Start the
+API on the laptop first and keep both devices on the same Wi-Fi - the APK is built
+against `http://192.168.37.142:4000/api`. Full instructions, including how to rebuild
+for a different IP or install over USB, are in [docs/ANDROID_APK.md](docs/ANDROID_APK.md).
+
+![Android app](docs/screens/14-android-final.png)
 
 ## Stack
 
@@ -27,6 +41,7 @@ runnable from a clean checkout with one `npm install` per package.
 | Database | SQLite via `node:sqlite` | Zero external services, real SQL, real transactions |
 | Auth | bcryptjs + HS256 JWT | Signed tokens with expiry, no session store to lose |
 | Front-end | Vue 3 + Vite + Tailwind | Single-file components, scoped styles, fast HMR |
+| Native shell | Capacitor 8 (Android) | Reuses the web build; no second UI codebase |
 | Bot | Node.js, `node:http` + queue | Same runtime, independent process, separate port |
 
 The database file is created and seeded on first start, so there is nothing to
@@ -161,14 +176,20 @@ FAKE_FAILURE_RATE=0.2 npm start   # guarantees retries in the log
 ## Tests
 
 ```bash
-cd server && npm test    # 11 checks: auth, search, transaction, rollback, 404s
-cd bot    && npm test    # 9 checks: handshake, async ack, retry, dead-letter, FIFO
-node e2e/smoke.mjs       # 13 browser checks (needs both servers running)
+cd server && npm test         # 11 checks: auth, search, transaction, rollback, 404s
+cd bot    && npm test         # 9 checks: handshake, async ack, retry, dead-letter, FIFO
+cd e2e    && npm run smoke    # 13 browser checks (needs both servers running)
+cd e2e    && npm run android  # 10 checks inside the installed APK via CDP
 ```
 
-The end-to-end run drives a real Chromium instance through login, search, low-stock
+The browser run drives a real Chromium instance through login, search, low-stock
 filtering, quotation creation, and the mobile card layout, then writes screenshots
 to `docs/screens/`. Install once with `npm i -D playwright && npx playwright install chromium`.
+
+The Android run attaches to the installed app's WebView over the DevTools protocol
+and repeats the same flow against the native shell, asserting that the APK really
+reaches the API rather than a bundled stub. See `docs/ANDROID_APK.md` for the
+`adb forward` prerequisite.
 
 ## Environment variables
 
@@ -177,6 +198,7 @@ to `docs/screens/`. Install once with `npm i -D playwright && npx playwright ins
 | `PORT` | `4000` / `4010` | server, bot |
 | `JWT_SECRET` | `dev-secret-change-me` | server |
 | `DB_PATH` | `server/data/portal.db` | server |
+| `VITE_API_URL` | `/api` | web build (absolute API origin for the APK) |
 | `VERIFY_TOKEN` | `local-dev-token` | bot |
 | `TRANSPORT` | `fake` | bot |
 | `FAKE_FAILURE_RATE` | `0.15` | bot |
@@ -193,6 +215,9 @@ to `docs/screens/`. Install once with `npm i -D playwright && npx playwright ins
   table is the next step.
 - No migration tool; `schema.sql` is idempotent and the seed only runs on an empty
   database.
+- The APK is signed with the Android debug key and its API origin is a LAN address
+  fixed at build time. A release build needs a private keystore and a reachable
+  HTTPS endpoint.
 
 ## License
 

@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Browser smoke test for the portal (login -> search -> quote -> mobile)",
+  "description": "Browser and Android smoke tests for the portal",
   "scripts": {
     "smoke": "node smoke.mjs",
+    "android": "node android.cdp.mjs",
     "install-browser": "playwright install chromium"
   },
   "devDependencies": {
