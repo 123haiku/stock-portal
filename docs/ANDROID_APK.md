@@ -1,6 +1,6 @@
 # Android APK - install and run
 
-`release/StockPortal-1.1.apk` (4.05 MB) is a signed debug build of the portal
+`release/StockPortal-1.2.apk` (4.05 MB) is a signed debug build of the portal
 wrapped in a Capacitor native shell. It is the same Vue codebase as the web app,
 compiled into the APK, so it runs without a browser or a dev server.
 
@@ -16,9 +16,10 @@ at startup by probing a candidate list and caching the winner in
 | 1 | cached `portal.apiBase` | written by the previous successful launch |
 | 2 | build-time `VITE_API_URL` | pins one origin and skips the probe entirely |
 | 3 | `window.location.origin + /api` | a real browser host, same-origin |
-| 4 | `http://192.168.37.200:4000/api` | the Raspberry Pi that hosts the API |
-| 5 | `http://localhost:4000/api` | `adb reverse tcp:4000 tcp:4000` over USB |
-| 6 | `http://10.0.2.2:4000/api` | Android emulator host loopback |
+| 4 | `https://portal.ngc6543.tech/api` | public Cloudflare Tunnel endpoint, works on any network |
+| 5 | `http://192.168.37.200:4000/api` | the Raspberry Pi on the home LAN |
+| 6 | `http://localhost:4000/api` | `adb reverse tcp:4000 tcp:4000` over USB |
+| 7 | `http://10.0.2.2:4000/api` | Android emulator host loopback |
 
 The first candidate whose `GET /api/health` returns `{"ok":true}` wins and is
 stored. Every request waits on that same probe, so the first login is never
@@ -51,8 +52,10 @@ The API and the static web bundle run as systemd user units on the Pi
 
 | URL | What |
 | --- | --- |
-| `http://192.168.37.200:4000/api/health` | API liveness |
-| `http://192.168.37.200:8088/` | the same Vue bundle, browser access |
+| `https://portal.ngc6543.tech/` | public: the Vue bundle through Cloudflare Tunnel |
+| `https://portal.ngc6543.tech/api/health` | public: the API through the same tunnel |
+| `http://192.168.37.200:4000/api/health` | LAN: API liveness |
+| `http://192.168.37.200:8088/` | LAN: the same Vue bundle |
 
 ```bash
 ssh pi4 'systemctl --user status stock-portal-api.service'
@@ -60,6 +63,42 @@ ssh pi4 'systemctl --user status stock-portal-web.service'
 ssh pi4 'journalctl --user -u stock-portal-api.service -n 30 --no-pager'
 ssh pi4 'curl -s http://127.0.0.1:4000/api/health'
 ```
+
+## Cloudflare Tunnel routing
+
+The Pi runs one named tunnel (`209278a2-be88-4639-a032-096f7a3ccb45`,
+`cloudflared.service`, token in `/etc/cloudflared/token`). Its ingress keeps every
+existing hostname and adds the portal entries:
+
+```
+api.ngc6543.tech        -> localhost:8000   (pre-existing, untouched)
+portal.ngc6543.tech/api/.* -> localhost:4000
+portal.ngc6543.tech     -> localhost:8088
+catch-all               -> http_status:404
+```
+
+`deploy/cf-setup.mjs` performs the merge through the Cloudflare API and creates
+the proxied CNAME. It needs a token from
+<https://dash.cloudflare.com/profile/api-tokens> with `Zone > DNS:Edit`
+(scoped to `ngc6543.tech`) and `Account > Cloudflare Tunnel:Edit`:
+
+```powershell
+cd stock-portal
+$env:CLOUDFLARE_API_TOKEN = "<token>"
+$env:CLOUDFLARE_ACCOUNT_ID = "c2d025ab2cbcafa619beb6e5a7ddb5c7"
+node deploy\cf-setup.mjs --dry-run   # prints ingress before/after, writes nothing
+node deploy\cf-setup.mjs             # applies ingress + DNS
+Remove-Item Env:CLOUDFLARE_API_TOKEN
+```
+
+The script verifies the token on `/user/tokens/verify`. Tokens created in the
+dashboard are user-owned: `/accounts/{id}/tokens/verify` rejects them with
+`1000 Invalid API Token` even when they are valid, so that endpoint is the wrong
+probe.
+
+`cloudflared` pulls the remote configuration at startup; no local `config.yml` is
+involved. A tunnel-token credential can only register the tunnel - it cannot
+change DNS or ingress, which is why the API token (or the dashboard) is required.
 
 Deployment is scripted from the repository root (PowerShell, Windows host):
 

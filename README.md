@@ -23,22 +23,30 @@ runnable from a clean checkout with one `npm install` per package.
 
 ## Install the Android app
 
-**[⬇ Download StockPortal-1.1.apk](https://github.com/123haiku/stock-portal/releases/download/v1.1.0/StockPortal-1.1.apk)** (4.05 MB, signed
+**[⬇ Download StockPortal-1.2.apk](https://github.com/123haiku/stock-portal/releases/download/v1.2.0/StockPortal-1.2.apk)** (4.05 MB, signed
 debug build, Android 7.0+)
 
 The APK has no fixed server address: at startup it probes a short candidate list
-(Raspberry Pi `192.168.37.200:4000`, `adb reverse` on `localhost:4000`, emulator
-`10.0.2.2:4000`) and caches the first one whose `/api/health` answers. The login
-screen shows the address in use and lets you change it without rebuilding. Full
-instructions, including the Pi deployment and the rebuild path, are in
-[docs/ANDROID_APK.md](docs/ANDROID_APK.md).
+and caches the first one whose `/api/health` answers. The public Cloudflare
+hostname comes first, so the phone works on any network:
+
+```
+https://portal.ngc6543.tech/api   →  http://192.168.37.200:4000/api
+                                 →  http://localhost:4000/api   (adb reverse)
+                                 →  http://10.0.2.2:4000/api    (emulator)
+```
+
+The login screen shows the address in use and lets you change it without
+rebuilding. Full instructions, including the Pi deployment and the tunnel
+routing, are in [docs/ANDROID_APK.md](docs/ANDROID_APK.md).
 
 ## Where it runs
 
 | Target | How |
 | --- | --- |
+| Public | `https://portal.ngc6543.tech/` and `/api/*` through Cloudflare Tunnel on the Pi |
 | Laptop, development | `server` on `:4000`, `web` dev server on `:5173` with an `/api` proxy |
-| Raspberry Pi | systemd user units: API on `:4000`, prebuilt bundle on `:8088` (`deploy/pi-deploy.sh`) |
+| Raspberry Pi (LAN) | systemd user units: API on `:4000`, prebuilt bundle on `:8088` (`deploy/pi-deploy.sh`) |
 | Android phone | the APK above, resolving its API origin at runtime |
 
 ![Android app](docs/screens/14-android-final.png)
