@@ -16,7 +16,11 @@
 const CACHE_KEY = 'portal.apiBase';
 const PROBE_TIMEOUT_MS = 2500;
 
+// Candidate origins, tried in order. The public Cloudflare hostname comes first:
+// it works from any network, so a phone outside the LAN still reaches the API.
+// The LAN and USB entries stay after it as fallbacks for when the tunnel is down.
 const BUILT_IN = [
+  'https://portal.ngc6543.tech/api',
   'http://192.168.37.200:4000/api',
   'http://localhost:4000/api',
   'http://10.0.2.2:4000/api',
