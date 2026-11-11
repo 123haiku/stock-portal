@@ -23,7 +23,7 @@ runnable from a clean checkout with one `npm install` per package.
 
 ## Install the Android app
 
-**[⬇ Download StockPortal-1.0.apk](release/StockPortal-1.0.apk)** (3.99 MB, signed
+**[⬇ Download StockPortal-1.0.apk](https://github.com/123haiku/stock-portal/releases/download/v1.0.0/StockPortal-1.0.apk)** (3.99 MB, signed
 debug build, Android 7.0+)
 
 Open the link on the phone, allow installs from the browser, and install. Start the
