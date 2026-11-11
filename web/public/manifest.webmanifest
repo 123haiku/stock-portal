@@ -1,0 +1,18 @@
+{
+  "name": "Stock & Quotation Portal",
+  "short_name": "StockPortal",
+  "description": "Mobile view of the enterprise stock and quotation management portal",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f1f5f9",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
