@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Stock Portal</string>
+    <string name="title_activity_main">Stock Portal</string>
+    <string name="package_name">com.weisheng.stockportal</string>
+    <string name="custom_url_scheme">com.weisheng.stockportal</string>
+</resources>

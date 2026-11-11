@@ -15,4 +15,11 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    // Capacitor bundles the compiled assets into the APK, so keep output flat
+    // and predictable under dist/.
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+  },
 });

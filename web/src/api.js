@@ -1,12 +1,18 @@
 import axios from 'axios';
 
 /**
- * Shared axios instance.
- * Base URL is relative so the Vite dev proxy (or a same-origin deployment)
- * forwards /api to the Express server - no CORS config needed in the browser.
+ * Resolve the API base URL for both delivery targets.
+ *
+ * - Browser (Vite dev / static hosting): relative "/api", forwarded by the dev
+ *   proxy or served same-origin.
+ * - Capacitor native shell: a WebView has no dev proxy, so a build-time
+ *   VITE_API_URL is injected. `adb reverse tcp:4000 tcp:4000` makes
+ *   http://localhost:4000 reach the host machine over USB.
  */
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE,
   timeout: 10000,
 });
 
